@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "tsc --project tsconfig.json",
     "compile-watch": "tsc --project tsconfig.json --watch",
-    "test": "mocha dist/test/**/*.spec.js",
+    "test": "tsc --project tsconfig.json && mocha dist/test/**/*.spec.js",
     "test-watch": "mocha dist/test/**/*.spec.js --watch"
   },
   "repository": {
