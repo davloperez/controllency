@@ -196,3 +196,59 @@ it('should not rebase maxConcurrency if various batches of items are being pushe
     promiseResolver[fnPromisesResolved]();
     fnPromisesResolved += 1;
 });
+
+it('should start processing items in the right order', (done) => {
+    let controllency = new Controllency({ maxConcurrency: 3 });
+    let nextExpectedItemNumber = 0;
+    let invalidOrderOccured = false;
+    let fn = function fn(itemNumber?: number): Promise<any> {
+        if (nextExpectedItemNumber !== itemNumber) {
+            invalidOrderOccured = true;
+        }
+        nextExpectedItemNumber += 1;
+        return new Promise((resolve, reject) => {
+            setImmediate(resolve);
+        });
+    };
+    for (let counter = 0; counter < 20; counter += 1){
+        controllency.push({ fn: fn, params: [counter]});
+    }
+    controllency.on('resolved', () => {
+        if (controllency.getBufferSize() === 0 && controllency.getCurrentQuantityProcessing() === 0) {
+            expect(controllency.getStatus()).to.be.eql('idle' as ControllencyStatus);
+            expect(invalidOrderOccured).to.be.false;
+            done();
+        }
+    });
+});
+
+it('should call provided function with the right arguments and "this" value', (done) => {
+    let controllency = new Controllency({ maxConcurrency: 3 });
+    let nextExpectedItemIndex = 0;
+    let errorOccured = false;
+    let testCases: any[] = [];
+    let fn = function fn(param1?: any, param2?: any, param3?: any): Promise<any> {
+        if (this !== testCases[nextExpectedItemIndex].thisObj ||
+            param1 !== testCases[nextExpectedItemIndex].params[0] ||
+            param2 !== testCases[nextExpectedItemIndex].params[1] ||
+            param3 !== testCases[nextExpectedItemIndex].params[2]) {
+            errorOccured = true;
+        }
+        nextExpectedItemIndex += 1;
+        return new Promise((resolve, reject) => {
+            setImmediate(resolve);
+        });
+    };
+    for (let counter = 0; counter < 20; counter += 1){
+        let testCaseItem = { fn: fn, params: [counter, 'a', 'a' + counter], thisObj: { val: counter } };
+        testCases.push(testCaseItem);
+        controllency.push(testCaseItem);
+    }
+    controllency.on('resolved', () => {
+        if (controllency.getBufferSize() === 0 && controllency.getCurrentQuantityProcessing() === 0) {
+            expect(controllency.getStatus()).to.be.eql('idle' as ControllencyStatus);
+            expect(errorOccured).to.be.false;
+            done();
+        }
+    });
+});
