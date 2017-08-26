@@ -8,3 +8,7 @@ With this module you can controll hoy many promises are being executed at the sa
 > Hey Controllency, launch all these hundreds of Promises, but execute 3 of them as maximum at once. Take the time you need. And please, signal me whenever some of them finishes.
 
 Controllency uses a little in-memory "queue" to store the pending promises to be executed as soon as possible. You can push new promises while the previous ones are still being executed or queued to be executed. When a Promise is resolved or rejected, Controllency emit an event which you can suscribe to if you need to know the succeed result or the failing reason.
+
+Here there is a simple schema about how Controllency works:
+
+![controllency_schema](https://user-images.githubusercontent.com/1970817/29745407-f866efe2-8ab9-11e7-9e73-8ced94bee93a.jpg)
