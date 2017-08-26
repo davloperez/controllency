@@ -6,6 +6,7 @@ import { ControllencyStatus } from "./ControllencyStatus";
 
 export class Controllency extends EventEmitter {
     private maxConcurrency: number;
+    private currentQuantityProcessing: number;
     private buffer: ControllencyBufferedItem[];
     private status: ControllencyStatus;
 
@@ -23,6 +24,7 @@ export class Controllency extends EventEmitter {
         this.setMaxConcurrency(options.maxConcurrency);
         this.buffer = [];
         this.status = 'idle';
+        this.currentQuantityProcessing = 0;
     }
 
     public setMaxConcurrency(maxConcurrency: number): void {
@@ -34,17 +36,20 @@ export class Controllency extends EventEmitter {
     public getMaxConcurrency(): number {
         return this.maxConcurrency;
     }
-    public getBufferSize(): number{
+    public getBufferSize(): number {
         return this.buffer.length;
     }
-    public getStatus(): ControllencyStatus{
+    public getStatus(): ControllencyStatus {
         return this.status;
     }
-    public pause(): void{
+    public pause(): void {
         this.status = 'paused';
     }
-    public resume(): void{
+    public resume(): void {
         this.status = this.buffer.length === 0 ? 'idle' : 'processing';
+    }
+    public getCurrentQuantityProcessing(): number {
+        return this.currentQuantityProcessing;
     }
 
     public push(item: ControllencyItem | (() => Promise<any>)): void {
@@ -73,10 +78,12 @@ export class Controllency extends EventEmitter {
         };
         this.buffer.push(bufferedItem);
         this.status = 'processing';
+        this.currentQuantityProcessing += 1;
         promise.then(this.onPromiseResolved.bind(this, bufferedItem), this.onPromiseRejected.bind(this, bufferedItem));
     }
 
     private onPromiseResolved(bufferedItem: ControllencyBufferedItem, result: any): void {
+        this.currentQuantityProcessing -= 1;
         this.buffer.splice(this.buffer.indexOf(bufferedItem), 1);
         if (this.buffer.length === 0) {
             this.status = 'idle';
@@ -85,6 +92,7 @@ export class Controllency extends EventEmitter {
     }
 
     private onPromiseRejected(bufferedItem: ControllencyBufferedItem, reason: any): void {
+        this.currentQuantityProcessing -= 1;
         this.buffer.splice(this.buffer.indexOf(bufferedItem), 1);
         if (this.buffer.length === 0) {
             this.status = 'idle';
