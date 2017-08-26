@@ -2,11 +2,12 @@
   "name": "controllency",
   "version": "0.0.1",
   "description": "Launcha concurrent processes (Promises) in a controlled way",
-  "main": "index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "compile": "tsc --project tsconfig.json",
     "compile-watch": "tsc --project tsconfig.json --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha dist/test/**/*.spec.js",
+    "test-watch": "mocha dist/test/**/*.spec.js --watch"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,12 @@
   "homepage": "https://github.com/davloperez/controllency#readme",
   "devDependencies": {
     "@types/node": "8.0.25",
-    "typescript": "2.4.2"
+    "@types/chai": "4.0.4",
+    "@types/chai-as-promised": "0.0.31",
+    "@types/mocha": "2.2.42",
+    "typescript": "2.4.2",
+    "chai": "4.1.1",
+    "chai-as-promised": "7.1.1",
+    "mocha": "3.5.0"
   }
 }
