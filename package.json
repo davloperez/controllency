@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Launcha concurrent processes (Promises) in a controlled way",
   "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "scripts": {
     "compile": "tsc --project tsconfig.json",
     "compile-watch": "tsc --project tsconfig.json --watch",
@@ -19,7 +20,7 @@
     "control"
   ],
   "author": "David López Pérez",
-  "license": "\tApache-2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/davloperez/controllency/issues"
   },
