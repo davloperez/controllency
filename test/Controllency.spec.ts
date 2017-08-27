@@ -252,3 +252,51 @@ it('should call provided function with the right arguments and "this" value', (d
         }
     });
 });
+
+it('should emit "resolved" event with the Promise resolved value as first parameter and the original ControllencyItem as second parameter', (done) => {
+    let controllency = new Controllency({ maxConcurrency: 3 });
+    let errorOccured = false;
+    let fn = function fn(param1?: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            setImmediate(() => { 
+                resolve(param1 * 2);
+            });
+        });
+    };
+    for (let counter = 0; counter < 20; counter += 1){
+        controllency.push({ fn: fn, params: [counter] });
+    }
+    controllency.on('resolved', (result, controllencyItem) => {
+        if (result !== controllencyItem.params[0] * 2) {
+            errorOccured = true;
+        }
+        if (controllency.getBufferSize() === 0 && controllency.getCurrentQuantityProcessing() === 0) {
+            expect(errorOccured).to.be.false;
+            done();
+        }
+    });
+});
+
+it('should emit "rejected" event with the Promise rejected reason as first parameter and the original ControllencyItem as second parameter', (done) => {
+    let controllency = new Controllency({ maxConcurrency: 3 });
+    let errorOccured = false;
+    let fn = function fn(param1?: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            setImmediate(() => { 
+                reject(param1 * 2);
+            });
+        });
+    };
+    for (let counter = 0; counter < 20; counter += 1){
+        controllency.push({ fn: fn, params: [counter] });
+    }
+    controllency.on('rejected', (reason, controllencyItem) => {
+        if (reason !== controllencyItem.params[0] * 2) {
+            errorOccured = true;
+        }
+        if (controllency.getBufferSize() === 0 && controllency.getCurrentQuantityProcessing() === 0) {
+            expect(errorOccured).to.be.false;
+            done();
+        }
+    });
+});
