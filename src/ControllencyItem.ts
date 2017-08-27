@@ -1,5 +1,5 @@
 export class ControllencyItem{
     public params?: any[];
-    public fn: () => Promise<any>;
+    public fn: (...params: any[]) => Promise<any>;
     public thisObj?: any;
 }

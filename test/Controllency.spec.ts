@@ -227,7 +227,7 @@ it('should call provided function with the right arguments and "this" value', (d
     let nextExpectedItemIndex = 0;
     let errorOccured = false;
     let testCases: any[] = [];
-    let fn = function fn(param1?: any, param2?: any, param3?: any): Promise<any> {
+    let fn = function fn(param1: any, param2: any, param3: any): Promise<any> {
         if (this !== testCases[nextExpectedItemIndex].thisObj ||
             param1 !== testCases[nextExpectedItemIndex].params[0] ||
             param2 !== testCases[nextExpectedItemIndex].params[1] ||
@@ -256,7 +256,7 @@ it('should call provided function with the right arguments and "this" value', (d
 it('should emit "resolved" event with the Promise resolved value as first parameter and the original ControllencyItem as second parameter', (done) => {
     let controllency = new Controllency({ maxConcurrency: 3 });
     let errorOccured = false;
-    let fn = function fn(param1?: any): Promise<any> {
+    let fn = function fn(param1: any): Promise<any> {
         return new Promise((resolve, reject) => {
             setImmediate(() => { 
                 resolve(param1 * 2);
@@ -280,7 +280,7 @@ it('should emit "resolved" event with the Promise resolved value as first parame
 it('should emit "rejected" event with the Promise rejected reason as first parameter and the original ControllencyItem as second parameter', (done) => {
     let controllency = new Controllency({ maxConcurrency: 3 });
     let errorOccured = false;
-    let fn = function fn(param1?: any): Promise<any> {
+    let fn = function fn(param1: any): Promise<any> {
         return new Promise((resolve, reject) => {
             setImmediate(() => { 
                 reject(param1 * 2);
