@@ -1,8 +1,8 @@
-./src/*
-./test/*
-./img/*
-./dist/src/**/*.map
-./dist/test/*
+/src/*
+/test/*
+/img/*
+/dist/src/**/*.map
+/dist/test/*
 .travis.yml
 tsconfig.json
 .gitignore
