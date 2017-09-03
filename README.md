@@ -1,4 +1,4 @@
-# controllency
+# Controllency
 Launch concurrent functions (Promises) in a controlled way.
 
 [![Build Status](https://travis-ci.org/davloperez/controllency.svg?branch=master)](https://travis-ci.org/davloperez/controllency)
@@ -12,3 +12,39 @@ Controllency uses a little in-memory "queue" to store the pending promises to be
 Here there is a simple schema about how Controllency works:
 
 ![controllency_schema](https://user-images.githubusercontent.com/1970817/29745407-f866efe2-8ab9-11e7-9e73-8ced94bee93a.jpg)
+
+
+## Installation
+```
+npm install controllency --save
+```
+## Usage
+Example 1: basic usage
+```typescript
+import { Controllency } from 'controllency';
+
+let controllency = new Controllency({ maxConcurrency: 2 });
+
+seriallency.push({ fn: hardWorkFn, params: [1]});
+seriallency.push({ fn: hardWorkFn, params: [2]});
+seriallency.push({ fn: hardWorkFn, params: [3]});
+seriallency.push({ fn: hardWorkFn, params: [4]});
+seriallency.push({ fn: hardWorkFn, params: [5]});
+seriallency.push({ fn: hardWorkFn, params: [6]});
+
+function hardWorkFn(numParam: number): Promise<any>{
+    console.log(`Executing hardWorkFn. numParam:${numParam}`);
+    return new Promise(resolve => {
+        // ... do some async process
+        setImmediate(resolve);
+    });
+}
+
+// If we supose that hardWorkFn returned promise takes 1 second to be resolved, output is:
+// At second 0: Executing hardWorkFn. numParam: 1
+// At second 0: Executing hardWorkFn. numParam: 2
+// At second 1: Executing hardWorkFn. numParam: 3
+// At second 1: Executing hardWorkFn. numParam: 4
+// At second 2: Executing hardWorkFn. numParam: 5
+// At second 2: Executing hardWorkFn. numParam: 6
+```
