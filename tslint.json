@@ -22,5 +22,7 @@
         ],
         "eofline": false
     },
-    "rulesDirectory": []
+    "rulesDirectory": [
+        "node_modules/tslint-no-unused-expression-chai/rules"
+    ]
 }

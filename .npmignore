@@ -1,9 +1,13 @@
 /src/*
 /test/*
 /img/*
+/.nyc_output/*
+/.coverage/*
+/.vscode/*
 /dist/src/**/*.map
 /dist/test/*
 .travis.yml
 tsconfig.json
 .gitignore
 .npmignore
+tslint.json
