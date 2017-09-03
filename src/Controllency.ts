@@ -8,7 +8,7 @@ import { ControllencyStatus } from "./ControllencyStatus";
  * Use this class to limit the quantity of concurrent functions (Promises) that can be executed concurrently.
  * If more functions than maxConcurrency are pushed before the first maxConcurrency functions are resolved, they
  * will be stored in a lighweight in-memory queue, and launched as soon as those first function are being resolved.
- * 
+ *
  * @export
  * @class Controllency
  * @extends {EventEmitter}
@@ -21,7 +21,7 @@ export class Controllency extends EventEmitter {
 
     /**
      * Creates an instance of Controllency.
-     * @param {ControllencyOptions} [options] 
+     * @param {ControllencyOptions} [options]
      * @memberof Controllency
      */
     constructor(options?: ControllencyOptions) {
@@ -43,12 +43,13 @@ export class Controllency extends EventEmitter {
 
     /**
      * Set the maximum quantity of concurrent promises that can be being processed at once.
-     * 
-     * @param {number} maxConcurrency 
+     *
+     * @param {number} maxConcurrency
      * @memberof Controllency
      */
     public setMaxConcurrency(maxConcurrency: number): void {
-        if (typeof maxConcurrency !== 'number' || Math.trunc(maxConcurrency) !== maxConcurrency || maxConcurrency <= 0) {
+        if (typeof maxConcurrency !== 'number' ||
+            Math.trunc(maxConcurrency) !== maxConcurrency || maxConcurrency <= 0) {
             throw new Error('maxConcurrency must by an integer');
         }
         this.maxConcurrency = maxConcurrency;
@@ -56,8 +57,8 @@ export class Controllency extends EventEmitter {
 
     /**
      * Get the current maximum quantity of concurrent promises that can be being processed at once.
-     * 
-     * @returns {number} 
+     *
+     * @returns {number}
      * @memberof Controllency
      */
     public getMaxConcurrency(): number {
@@ -68,8 +69,8 @@ export class Controllency extends EventEmitter {
      * Get the current internal buffer of this Controllency object.
      * The promises that are currently being processed are included in this internal buffer. In other words,
      * this method returns que quantity of waiting functions in adition to the quantity of processing promises.
-     * 
-     * @returns {number} 
+     *
+     * @returns {number}
      * @memberof Controllency
      */
     public getBufferSize(): number {
@@ -78,8 +79,8 @@ export class Controllency extends EventEmitter {
 
     /**
      * Get the current status of this Controllency object. It can be 'paused', 'processing' or 'idle'.
-     * 
-     * @returns {ControllencyStatus} 
+     *
+     * @returns {ControllencyStatus}
      * @memberof Controllency
      */
     public getStatus(): ControllencyStatus {
@@ -92,7 +93,7 @@ export class Controllency extends EventEmitter {
      * calling 'push()' function to queue new functions to be executed later.
      *
      * Important Note: all current processing Promises will continue being processed and resolved/rejected.
-     * 
+     *
      * @memberof Controllency
      */
     public pause(): void {
@@ -104,7 +105,7 @@ export class Controllency extends EventEmitter {
      * 'idle' or 'processing', depending on the state of the internal queue and current processing Promises.
      *
      * Important Note: by calling to this method, it will immediately start processing any available queued function.
-     * 
+     *
      * @memberof Controllency
      */
     public resume(): void {
@@ -114,8 +115,8 @@ export class Controllency extends EventEmitter {
 
     /**
      * Get the current quantity of processing Promises. This value could be maxConcurrency as maximum.
-     * 
-     * @returns {number} 
+     *
+     * @returns {number}
      * @memberof Controllency
      */
     public getCurrentQuantityProcessing(): number {
@@ -129,8 +130,8 @@ export class Controllency extends EventEmitter {
      *
      * You can pass directly the reference to the function to be executed, or you can pass the an object with
      * the function, the paremeters to execute that function, and the value for 'this' inside that function.
-     * 
-     * @param {(ControllencyItem | (() => Promise<any>))} item 
+     *
+     * @param {(ControllencyItem | (() => Promise<any>))} item
      * @memberof Controllency
      */
     public push(item: ControllencyItem | (() => Promise<any>)): void {
@@ -148,13 +149,13 @@ export class Controllency extends EventEmitter {
         if (typeof item.fn !== 'function') {
             throw new Error('"fn" must be a function');
         }
-        let bufferedItem: ControllencyBufferedItem = {
+        const bufferedItem: ControllencyBufferedItem = {
             bufferedDate: new Date(),
-            promise: null,
             fn: item.fn,
             params: item.params,
-            thisObj: item.thisObj,
-            processing: true
+            processing: true,
+            promise: null,
+            thisObj: item.thisObj
         };
         this.buffer.push(bufferedItem);
         this.proceed();
@@ -164,8 +165,12 @@ export class Controllency extends EventEmitter {
         if (this.maxConcurrency === this.currentQuantityProcessing || this.status === 'paused') {
             return;
         }
-        let quantityToStart = Math.min(this.maxConcurrency - this.currentQuantityProcessing, this.buffer.length - this.currentQuantityProcessing);
-        let itemsToStart = this.buffer.slice(this.currentQuantityProcessing, this.currentQuantityProcessing + quantityToStart);
+        const quantityToStart = Math.min(
+            this.maxConcurrency - this.currentQuantityProcessing,
+            this.buffer.length - this.currentQuantityProcessing);
+        const itemsToStart = this.buffer.slice(
+            this.currentQuantityProcessing,
+            this.currentQuantityProcessing + quantityToStart);
         this.currentQuantityProcessing += quantityToStart;
         this.status = this.currentQuantityProcessing === 0 ? 'idle' : 'processing';
         itemsToStart.forEach(this.startItem.bind(this));
@@ -173,10 +178,13 @@ export class Controllency extends EventEmitter {
 
     private startItem(bufferedItem: ControllencyBufferedItem): void {
         if (typeof bufferedItem !== 'object' || bufferedItem.promise !== null) {
-            return; // if by some reason startItem is called with an already initialized bufferedItem, just ignore it. This should never happen.
+            return; // if by some reason startItem is called with an
+            // already initialized bufferedItem, just ignore it.This should never happen.
         }
         bufferedItem.promise = Promise.resolve(bufferedItem.fn.apply(bufferedItem.thisObj, bufferedItem.params));
-        bufferedItem.promise.then(this.onPromiseResolved.bind(this, bufferedItem), this.onPromiseRejected.bind(this, bufferedItem));
+        bufferedItem.promise.then(
+            this.onPromiseResolved.bind(this, bufferedItem),
+            this.onPromiseRejected.bind(this, bufferedItem));
     }
 
     private onPromiseResolved(bufferedItem: ControllencyBufferedItem, result: any): void {

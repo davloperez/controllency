@@ -1,3 +1,3 @@
-export class ControllencyOptions{
+export class ControllencyOptions {
     public maxConcurrency: number;
 }
