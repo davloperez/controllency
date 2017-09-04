@@ -24,16 +24,21 @@ export class Controllency extends EventEmitter {
      * @param {ControllencyOptions} [options]
      * @memberof Controllency
      */
-    constructor(options?: ControllencyOptions) {
+    constructor(options?: ControllencyOptions | number) {
         super();
-        if (typeof options === 'undefined') {
+
+        if (typeof options === 'number') {
+            options = {
+                maxConcurrency: options
+            };
+        } else if (typeof options === 'undefined') {
             options = {
                 maxConcurrency: 1
             };
         } else if (typeof options === 'object') {
             options.maxConcurrency = options.maxConcurrency || 1;
         } else {
-            throw new Error('"options" must be an object');
+            throw new Error('"options" must be an object or a number');
         }
         this.setMaxConcurrency(options.maxConcurrency);
         this.buffer = [];
@@ -50,7 +55,7 @@ export class Controllency extends EventEmitter {
     public setMaxConcurrency(maxConcurrency: number): void {
         if (typeof maxConcurrency !== 'number' ||
             Math.trunc(maxConcurrency) !== maxConcurrency || maxConcurrency <= 0) {
-            throw new Error('maxConcurrency must by an integer');
+            throw new Error('maxConcurrency must be an integer');
         }
         this.maxConcurrency = maxConcurrency;
     }
@@ -177,10 +182,6 @@ export class Controllency extends EventEmitter {
     }
 
     private startItem(bufferedItem: ControllencyBufferedItem): void {
-        if (typeof bufferedItem !== 'object' || bufferedItem.promise !== null) {
-            return; // if by some reason startItem is called with an
-            // already initialized bufferedItem, just ignore it.This should never happen.
-        }
         bufferedItem.promise = Promise.resolve(bufferedItem.fn.apply(bufferedItem.thisObj, bufferedItem.params));
         bufferedItem.promise.then(
             this.onPromiseResolved.bind(this, bufferedItem),

@@ -5,8 +5,53 @@ import { Controllency } from "../src/Controllency";
 import { ControllencyStatus } from "../src/ControllencyStatus";
 use(chaiAsPromised);
 
-it('should be initialized with maxConcurrency = 1', () => {
+it('should throw error if initialized with negative maxConcurrency', () => {
+    expect(() => {
+        // tslint:disable-next-line:no-unused-expression
+        new Controllency(-1);
+    }).to.throw(Error);
+});
+
+it('should throw error if initialized with invalid constructor param', () => {
+    expect(() => {
+        // tslint:disable-next-line:no-unused-expression
+        new Controllency('not object nor integer' as any);
+    }).to.throw(Error);
+});
+
+it('should throw error if trying to set a negative maxConcurrency', () => {
+    expect(() => {
+        // tslint:disable-next-line:no-unused-expression
+        new Controllency().setMaxConcurrency(-1);
+    }).to.throw(Error);
+});
+
+it('should throw error if trying to push invalid object', () => {
+    expect(() => {
+        // tslint:disable-next-line:no-unused-expression
+        new Controllency().push('invalid' as any);
+    }).to.throw(Error);
+});
+
+it('should throw error if trying to push object without fn', () => {
+    expect(() => {
+        // tslint:disable-next-line:no-unused-expression
+        new Controllency().push({} as any);
+    }).to.throw(Error);
+});
+
+it('should be initialized with correct maxConcurrency supplied by constructor params', () => {
+    const controllency = new Controllency(5);
+    expect(controllency.getMaxConcurrency()).to.be.eql(5);
+});
+
+it('should be initialized with maxConcurrency = 1 if no params are supplied in constructor', () => {
     const controllency = new Controllency();
+    expect(controllency.getMaxConcurrency()).to.be.eql(1);
+});
+
+it('should be initialized with maxConcurrency = 1 if empty object is supplied in constructor', () => {
+    const controllency = new Controllency({} as any);
     expect(controllency.getMaxConcurrency()).to.be.eql(1);
 });
 
@@ -111,9 +156,15 @@ it('should start processing queue items after resume', () => {
 it('should not rebase maxConcurrency if a batch of items are pushed at the same time', (done) => {
     const controllency = new Controllency({ maxConcurrency: 3 });
     let fnCalledCount = 0;
+    let isFirstCall = true; // to fail the first promise
     const fn = (): Promise<any> => {
         fnCalledCount += 1;
         return new Promise((resolve, reject) => {
+            if (isFirstCall) {
+                setImmediate(reject);
+                isFirstCall = false;
+                return;
+            }
             setImmediate(resolve);
         });
     };
@@ -201,6 +252,22 @@ it('should not rebase maxConcurrency if various batches of items are being pushe
         fnPromisesResolved += 1;
     });
 
+it('should allow to specify a single fn param without using an array', (done) => {
+    const controllency = new Controllency({ maxConcurrency: 3 });
+    let paramCalled: number;
+    const fn = (param?: number): Promise<any> => {
+        paramCalled = param;
+        return new Promise((resolve, reject) => {
+            setImmediate(resolve);
+        });
+    };
+    controllency.push({ fn, params: 10 });
+    controllency.on('resolved', () => {
+        expect(paramCalled).to.be.eql(10);
+        done();
+    });
+});
+
 it('should start processing items in the right order', (done) => {
     const controllency = new Controllency({ maxConcurrency: 3 });
     let nextExpectedItemNumber = 0;
@@ -285,28 +352,23 @@ it('should emit "resolved" event with the Promise resolved value as first parame
         });
     });
 
-it('should emit "rejected" event with the Promise rejected reason as first parameter' +
-    ' and the original ControllencyItem as second parameter', (done) => {
+it('should have status "processing" after resume if some promise still pending to be resolved',
+    (done) => {
         const controllency = new Controllency({ maxConcurrency: 3 });
-        let errorOccured = false;
-        const fn = (param1: any): Promise<any> => {
+        let promiseResolver: () => void;
+        const fn = (): Promise<any> => {
             return new Promise((resolve, reject) => {
-                setImmediate(() => {
-                    reject(param1 * 2);
-                });
+                promiseResolver = resolve;
             });
         };
-        for (let counter = 0; counter < 20; counter += 1) {
-            controllency.push({ fn, params: [counter] });
-        }
-        controllency.on('rejected', (reason, controllencyItem) => {
-            if (reason !== controllencyItem.params[0] * 2) {
-                errorOccured = true;
-            }
-            if (controllency.getBufferSize() === 0 && controllency.getCurrentQuantityProcessing() === 0) {
-                // tslint:disable-next-line:no-unused-expression
-                expect(errorOccured).to.be.false;
-                done();
-            }
+        controllency.push(fn);
+        expect(controllency.getStatus()).to.be.eql('processing');
+        controllency.pause();
+        expect(controllency.getStatus()).to.be.eql('paused');
+        controllency.resume();
+        expect(controllency.getStatus()).to.be.eql('processing');
+        controllency.on('resolved', () => {
+            done();
         });
+        promiseResolver();
     });

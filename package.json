@@ -9,7 +9,7 @@
     "compile": "tsc --project tsconfig.json",
     "compile-watch": "tsc --project tsconfig.json --watch",
     "test": "tsc --project tsconfig.json && mocha",
-    "test-watch": "mocha dist/test/**/*.spec.js --watch",
+    "test-watch": "mocha --watch",
     "test-coverage": "nyc mocha"
   },
   "repository": {
