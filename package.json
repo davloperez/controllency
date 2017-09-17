@@ -1,6 +1,6 @@
 {
   "name": "controllency",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Launch concurrent processes (Promises) in a controlled way",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
