@@ -172,7 +172,7 @@ class Controllency extends events_1.EventEmitter {
     onPromiseResolved(bufferedItem, result) {
         this.currentQuantityProcessing -= 1;
         this.buffer.splice(this.buffer.indexOf(bufferedItem), 1);
-        if (this.currentQuantityProcessing === 0) {
+        if (this.currentQuantityProcessing === 0 && this.status !== 'paused') {
             this.status = 'idle';
         }
         this.proceed();
@@ -181,7 +181,7 @@ class Controllency extends events_1.EventEmitter {
     onPromiseRejected(bufferedItem, reason) {
         this.currentQuantityProcessing -= 1;
         this.buffer.splice(this.buffer.indexOf(bufferedItem), 1);
-        if (this.currentQuantityProcessing === 0) {
+        if (this.currentQuantityProcessing === 0 && this.status !== 'paused') {
             this.status = 'idle';
         }
         this.proceed();
