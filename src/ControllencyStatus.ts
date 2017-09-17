@@ -1,2 +1,1 @@
-declare type ControllencyStatus = 'idle' | 'processing' | 'paused';
-export { ControllencyStatus };
+export type ControllencyStatus = 'idle' | 'processing' | 'paused';

@@ -1,7 +1,7 @@
-import { ControllencyOptions } from "./ControllencyOptions";
-import { ControllencyItem } from "./ControllencyItem";
+import { IControllencyOptions } from "./IControllencyOptions";
+import { IControllencyItem } from "./IControllencyItem";
 import { EventEmitter } from "events";
-import { ControllencyBufferedItem } from "./ControllencyBufferedItem";
+import { IControllencyBufferedItem } from "./IControllencyBufferedItem";
 import { ControllencyStatus } from "./ControllencyStatus";
 
 /**
@@ -16,15 +16,15 @@ import { ControllencyStatus } from "./ControllencyStatus";
 export class Controllency extends EventEmitter {
     private maxConcurrency: number;
     private currentQuantityProcessing: number;
-    private buffer: ControllencyBufferedItem[];
+    private buffer: IControllencyBufferedItem[];
     private status: ControllencyStatus;
 
     /**
      * Creates an instance of Controllency.
-     * @param {ControllencyOptions} [options]
+     * @param {IControllencyOptions} [options]
      * @memberof Controllency
      */
-    constructor(options?: ControllencyOptions | number) {
+    constructor(options?: IControllencyOptions | number) {
         super();
 
         if (typeof options === 'number') {
@@ -47,7 +47,7 @@ export class Controllency extends EventEmitter {
     }
 
     /**
-     * Set the maximum quantity of concurrent promises that can be being processed at once.
+     * Set the maximum quantity of concurrent promises that can be being processed at the same time.
      *
      * @param {number} maxConcurrency
      * @memberof Controllency
@@ -61,7 +61,7 @@ export class Controllency extends EventEmitter {
     }
 
     /**
-     * Get the current maximum quantity of concurrent promises that can be being processed at once.
+     * Get the current maximum quantity of concurrent promises that can be being processed at the same time.
      *
      * @returns {number}
      * @memberof Controllency
@@ -139,7 +139,7 @@ export class Controllency extends EventEmitter {
      * @param {(ControllencyItem | (() => Promise<any>))} item
      * @memberof Controllency
      */
-    public push(item: ControllencyItem | (() => Promise<any>)): void {
+    public push(item: IControllencyItem | (() => Promise<any>)): void {
         if (typeof item === 'function') {
             item = {
                 fn: item
@@ -154,7 +154,7 @@ export class Controllency extends EventEmitter {
         if (typeof item.fn !== 'function') {
             throw new Error('"fn" must be a function');
         }
-        const bufferedItem: ControllencyBufferedItem = {
+        const bufferedItem: IControllencyBufferedItem = {
             bufferedDate: new Date(),
             fn: item.fn,
             params: item.params,
@@ -181,14 +181,14 @@ export class Controllency extends EventEmitter {
         itemsToStart.forEach(this.startItem.bind(this));
     }
 
-    private startItem(bufferedItem: ControllencyBufferedItem): void {
+    private startItem(bufferedItem: IControllencyBufferedItem): void {
         bufferedItem.promise = Promise.resolve(bufferedItem.fn.apply(bufferedItem.thisObj, bufferedItem.params));
         bufferedItem.promise.then(
             this.onPromiseResolved.bind(this, bufferedItem),
             this.onPromiseRejected.bind(this, bufferedItem));
     }
 
-    private onPromiseResolved(bufferedItem: ControllencyBufferedItem, result: any): void {
+    private onPromiseResolved(bufferedItem: IControllencyBufferedItem, result: any): void {
         this.currentQuantityProcessing -= 1;
         this.buffer.splice(this.buffer.indexOf(bufferedItem), 1);
         if (this.currentQuantityProcessing === 0) {
@@ -198,7 +198,7 @@ export class Controllency extends EventEmitter {
         this.emit('resolved', result, bufferedItem);
     }
 
-    private onPromiseRejected(bufferedItem: ControllencyBufferedItem, reason: any): void {
+    private onPromiseRejected(bufferedItem: IControllencyBufferedItem, reason: any): void {
         this.currentQuantityProcessing -= 1;
         this.buffer.splice(this.buffer.indexOf(bufferedItem), 1);
         if (this.currentQuantityProcessing === 0) {
