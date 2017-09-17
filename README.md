@@ -5,6 +5,8 @@ Launch concurrent functions (Promises) in a controlled way.
 [![Node Version](https://img.shields.io/badge/node-v6.10.0-blue.svg?style=flat)](https://nodejs.org/en/blog/release/v6.10.0/)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat)](https://nodejs.org/en/blog/release/v6.10.0/)
 
+View demo in [JSFiddle](https://jsfiddle.net/yzxre6fu/1/)
+
 With this module you can control how many promises are being executed at the same time when you have a large quantity of them. You can do things like:
 > Hey Controllency, launch all these hundreds of Promises, but execute 3 of them as maximum at once. Take the time you need. And please, signal me whenever some of them finishes.
 
