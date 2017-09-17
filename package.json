@@ -7,6 +7,8 @@
   "scripts": {
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "compile": "tsc --project tsconfig.json",
+    "compile-browserify": "browserify -e client/export.js -o client/controllency.js",
+    "compile-uglify-es": "uglifyjs client/controllency.js -o client/controllency.min.js -c",
     "compile-watch": "tsc --project tsconfig.json --watch",
     "test": "tsc --project tsconfig.json && mocha",
     "test-watch": "mocha --watch",
@@ -32,6 +34,7 @@
     "@types/chai-as-promised": "0.0.31",
     "@types/mocha": "2.2.42",
     "@types/node": "8.0.25",
+    "browserify": "14.4.0",
     "chai": "4.1.1",
     "chai-as-promised": "7.1.1",
     "istanbul": "0.4.5",
@@ -41,7 +44,8 @@
     "ts-node": "3.3.0",
     "tslint": "5.7.0",
     "tslint-no-unused-expression-chai": "0.0.2",
-    "typescript": "2.4.2"
+    "typescript": "2.4.2",
+    "uglify-es": "3.1.0"
   },
   "nyc": {
     "include": [
