@@ -40,8 +40,8 @@ export class Controllency extends EventEmitter {
         } else {
             throw new Error('"options" must be an object or a number');
         }
-        this.setMaxConcurrency(options.maxConcurrency);
         this.buffer = [];
+        this.setMaxConcurrency(options.maxConcurrency);
         this.status = 'idle';
         this.currentQuantityProcessing = 0;
     }
@@ -58,6 +58,7 @@ export class Controllency extends EventEmitter {
             throw new Error('maxConcurrency must be an integer');
         }
         this.maxConcurrency = maxConcurrency;
+        this.proceed();
     }
 
     /**
@@ -167,7 +168,7 @@ export class Controllency extends EventEmitter {
     }
 
     private proceed(): void {
-        if (this.maxConcurrency === this.currentQuantityProcessing || this.status === 'paused') {
+        if (this.maxConcurrency <= this.currentQuantityProcessing || this.status === 'paused') {
             return;
         }
         const quantityToStart = Math.min(

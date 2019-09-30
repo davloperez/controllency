@@ -252,6 +252,111 @@ it('should not rebase maxConcurrency if various batches of items are being pushe
         fnPromisesResolved += 1;
     });
 
+it('should allow to increase maxConcurrency and immediately start processing queued items',
+    (done) => {
+        const controllency = new Controllency({ maxConcurrency: 1 });
+        let fnCalledCount = 0;
+        let fnPromisesResolved = 0;
+        const promiseResolver: Array<() => void> = [];
+        const fn = (): Promise<any> => {
+            fnCalledCount += 1;
+            return new Promise((resolve, reject) => {
+                promiseResolver.push(resolve);
+            });
+        };
+        controllency.push(fn);
+        controllency.push(fn);
+        expect(fnCalledCount).to.be.eql(1);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(1);
+        expect(controllency.getBufferSize()).to.be.eql(2);
+        controllency.push(fn);
+        controllency.push(fn);
+        expect(fnCalledCount).to.be.eql(1);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(1);
+        expect(controllency.getBufferSize()).to.be.eql(4);
+        controllency.push(fn);
+        controllency.push(fn);
+        expect(fnCalledCount).to.be.eql(1);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(1);
+        expect(controllency.getBufferSize()).to.be.eql(6);
+        controllency.setMaxConcurrency(3);
+        expect(fnCalledCount).to.be.eql(3);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(3);
+        expect(controllency.getBufferSize()).to.be.eql(6);
+
+        controllency.on('resolved', () => {
+            expect(controllency.getCurrentQuantityProcessing()).to.be.lessThan(4);
+            expect(fnCalledCount - fnPromisesResolved).to.be.lessThan(4);
+            if (fnCalledCount === 6 &&
+                controllency.getBufferSize() === 0 &&
+                controllency.getCurrentQuantityProcessing() === 0) {
+                expect(controllency.getStatus()).to.be.eql('idle' as ControllencyStatus);
+                done();
+            } else {
+                promiseResolver[fnPromisesResolved]();
+                fnPromisesResolved += 1;
+            }
+        });
+        promiseResolver[fnPromisesResolved]();
+        fnPromisesResolved += 1;
+    });
+
+it('should allow to decrease maxConcurrency and after finished current processing shoult not automatically start more',
+    (done) => {
+        const controllency = new Controllency({ maxConcurrency: 5 });
+        let fnCalledCount = 0;
+        let fnPromisesResolved = 0;
+        const promiseResolver: Array<() => void> = [];
+        const fn = (): Promise<any> => {
+            fnCalledCount += 1;
+            return new Promise((resolve, reject) => {
+                promiseResolver.push(resolve);
+            });
+        };
+        controllency.push(fn);
+        controllency.push(fn);
+        controllency.push(fn);
+        controllency.push(fn);
+        controllency.push(fn);
+        controllency.push(fn);
+        expect(fnCalledCount).to.be.eql(5);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(5);
+        expect(controllency.getBufferSize()).to.be.eql(6);
+        controllency.push(fn);
+        controllency.push(fn);
+        expect(fnCalledCount).to.be.eql(5);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(5);
+        expect(controllency.getBufferSize()).to.be.eql(8);
+        controllency.setMaxConcurrency(2);
+        expect(fnCalledCount).to.be.eql(5);
+        expect(controllency.getCurrentQuantityProcessing()).to.be.eql(5);
+        expect(controllency.getBufferSize()).to.be.eql(8);
+        const currentResolvers = promiseResolver.splice(0, promiseResolver.length);
+        controllency.on('resolved', () => {
+            fnPromisesResolved += 1;
+            if (fnPromisesResolved === 5) {
+                expect(fnCalledCount).to.be.eql(7);
+                expect(controllency.getCurrentQuantityProcessing()).to.be.eql(2);
+                expect(controllency.getBufferSize()).to.be.eql(3);
+                promiseResolver[0]();
+            }
+            if (fnPromisesResolved === 6) {
+                expect(fnCalledCount).to.be.eql(8);
+                expect(controllency.getCurrentQuantityProcessing()).to.be.eql(2);
+                expect(controllency.getBufferSize()).to.be.eql(2);
+                promiseResolver[1]();
+                promiseResolver[2]();
+            }
+            if (fnPromisesResolved === 8) {
+                expect(fnCalledCount).to.be.eql(8);
+                expect(controllency.getCurrentQuantityProcessing()).to.be.eql(0);
+                expect(controllency.getBufferSize()).to.be.eql(0);
+                done();
+            }
+        });
+        currentResolvers.forEach((resolver) => resolver());
+    });
+
 it('should allow to specify a single fn param without using an array', (done) => {
     const controllency = new Controllency({ maxConcurrency: 3 });
     let paramCalled: number;
@@ -299,7 +404,7 @@ it('should call provided function with the right arguments and "this" value', (d
     let nextExpectedItemIndex = 0;
     let errorOccured = false;
     const testCases: any[] = [];
-    const fn = function(param1: any, param2: any, param3: any): Promise<any> {
+    const fn = function (param1: any, param2: any, param3: any): Promise<any> {
         if (this !== testCases[nextExpectedItemIndex].thisObj ||
             param1 !== testCases[nextExpectedItemIndex].params[0] ||
             param2 !== testCases[nextExpectedItemIndex].params[1] ||
